@@ -20,7 +20,7 @@ Without ModsSettings, this mod has no UI and does nothing.
 
 ## Install
 
-1. Download the latest `.wotmod` from [Releases](https://github.com/ANIALLATOR114/extended-sensitivity-adjustment/releases).
+1. Download the latest `.wotmod` from [Releases](https://github.com/niall-oss/extended-sensitivity-adjustment/releases).
 2. Copy it into your World of Tanks `mods/<game_version>/` folder.
 
 Example:
@@ -67,7 +67,7 @@ Output: `build/ANIALLATOR.Extended_Sensitivity_Adjustment_1.1.0.wotmod`
 GitHub Actions builds the mod on every pull request and on merges to `main`.
 
 - **Pull requests**: download the `.wotmod` from the workflow run's **Artifacts** (`wotmod-pr-{commit_sha}`).
-- **Merges to `main`**: publishes or updates a [GitHub Release](https://github.com/ANIALLATOR114/extended-sensitivity-adjustment/releases) (`v{version}`) with the built `.wotmod` attached.
+- **Merges to `main`**: publishes or updates a [GitHub Release](https://github.com/niall-oss/extended-sensitivity-adjustment/releases) (`v{version}`) with the built `.wotmod` attached.
 
 Checks run `ruff`, `ty` and the `pytest` suite in `tests/`, which tests the settings lifecycle against stand-ins for the game and ModsSettings API (`uv run pytest`).
 

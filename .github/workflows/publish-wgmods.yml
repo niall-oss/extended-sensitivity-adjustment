@@ -15,7 +15,7 @@ on:
         description: Information for moderators
         required: false
         type: string
-        default: Source code available https://github.com/ANIALLATOR114/extended-sensitivity-adjustment
+        default: Source code available https://github.com/niall-oss/extended-sensitivity-adjustment
       dry_run:
         description: Print the request without uploading
         required: false
