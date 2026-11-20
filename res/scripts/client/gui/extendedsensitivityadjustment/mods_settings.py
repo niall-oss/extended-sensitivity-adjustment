@@ -1,13 +1,18 @@
 from debug_utils import LOG_NOTE
 
+from gui.extendedsensitivityadjustment import sensitivity
+
 MOD_LINKAGE = "extended_sensitivity_adjustment"
-SETTINGS_VERSION = 1
+SETTINGS_VERSION = 2
+
+ARCADE_VAR = "arcade_sensitivity"
+SNIPER_VAR = "sniper_sensitivity"
 
 HINT_TOOLTIP = (
     "{HEADER}Precise mouse sensitivity{/HEADER}"
-    "{BODY}Enter the exact sensitivity values stored in your game preferences. "
-    "These are the same floats written to preferences.xml under controlMode "
-    "for arcade and sniper camera modes.{/BODY}"
+    "{BODY}Enter exact sensitivity values. These are the same game settings "
+    "as the Options menu sliders and are saved to your game preferences "
+    "(preferences.xml).{/BODY}"
 )
 
 INPUT_TOOLTIP = (
@@ -15,6 +20,10 @@ INPUT_TOOLTIP = (
     + "{BODY}Valid range: %.1f to %.1f. Use up to six decimal places "
     "(for example 0.120000). Changes apply when you click Apply.{/BODY}"
 )
+
+_api = None
+_settings_core = None
+_panel_values = {}
 
 
 def _get_mods_settings_api():
@@ -25,21 +34,29 @@ def _get_mods_settings_api():
     return g_modsSettingsApi
 
 
-def _build_template():
-    from gui.extendedsensitivityadjustment import sensitivity
+def _vars_to_keys():
+    arcade_key, sniper_key = sensitivity.get_sensitivity_keys()
+    return ((ARCADE_VAR, arcade_key), (SNIPER_VAR, sniper_key))
+
+
+def _read_native_values():
+    return dict(
+        (var, sensitivity.format_sensitivity(sensitivity.get_sensitivity(key)))
+        for var, key in _vars_to_keys()
+    )
+
+
+def _build_template(values):
     from gui.modsSettingsApi import templates
 
-    arcade_value = sensitivity.format_sensitivity(
-        sensitivity.get_arcade_sensitivity()
-    )
-    sniper_value = sensitivity.format_sensitivity(
-        sensitivity.get_sniper_sensitivity()
+    tooltip = INPUT_TOOLTIP % (
+        sensitivity.MIN_SENSITIVITY,
+        sensitivity.MAX_SENSITIVITY,
     )
 
     return {
         "modDisplayName": "Extended Sensitivity Adjustment",
         "settingsVersion": SETTINGS_VERSION,
-        "enabled": True,
         "column1": [
             templates.createLabel(
                 "Set precise arcade and sniper mouse sensitivity values.",
@@ -48,47 +65,67 @@ def _build_template():
             templates.createEmpty(),
             templates.createInput(
                 "Arcade sensitivity",
-                "arcade_sensitivity",
-                arcade_value,
-                tooltip=INPUT_TOOLTIP
-                % (sensitivity.MIN_SENSITIVITY, sensitivity.MAX_SENSITIVITY),
+                ARCADE_VAR,
+                values[ARCADE_VAR],
+                tooltip=tooltip,
                 width=100,
             ),
             templates.createInput(
                 "Sniper sensitivity",
-                "sniper_sensitivity",
-                sniper_value,
-                tooltip=INPUT_TOOLTIP
-                % (sensitivity.MIN_SENSITIVITY, sensitivity.MAX_SENSITIVITY),
+                SNIPER_VAR,
+                values[SNIPER_VAR],
+                tooltip=tooltip,
                 width=100,
             ),
         ],
         "column2": [
-            templates.createLabel("Current arcade: %s" % arcade_value),
-            templates.createLabel("Current sniper: %s" % sniper_value),
+            templates.createLabel("Current arcade: %s" % values[ARCADE_VAR]),
+            templates.createLabel("Current sniper: %s" % values[SNIPER_VAR]),
             templates.createEmpty(),
             templates.createLabel(
-                "Values are saved to preferences.xml when you click Apply."
+                "Values are saved to your game preferences when you click Apply."
             ),
         ],
     }
 
 
+def _publish_native_values():
+    # ModsSettings API only replaces a stored template when settingsVersion
+    # increases, so the live values are written into its state directly.
+    # Checked against ModsSettings API 1.7.1.
+    values = _read_native_values()
+    template = _build_template(values)
+    state = _api.state
+    state["templates"][MOD_LINKAGE] = template
+    state["settings"][MOD_LINKAGE] = _api.getSettingsFromTemplate(template)
+    _api.saveState()
+    return values
+
+
+def _sync_panel():
+    _panel_values.clear()
+    _panel_values.update(_publish_native_values())
+
+
+def _edited_values(settings):
+    # The panel sends every field of the mod on Apply, so only fields that
+    # differ from what it was showing count as edits; the rest must not
+    # overwrite a native change. _panel_values is deliberately not moved by
+    # native changes, because an open panel still shows the older values.
+    edited = {}
+    for var, key in _vars_to_keys():
+        shown = _panel_values.get(var)
+        value = sensitivity.parse_sensitivity(
+            settings.get(var), sensitivity.get_sensitivity(key)
+        )
+        if sensitivity.format_sensitivity(value) != shown:
+            edited[key] = value
+    return edited
+
+
 def _apply_settings(settings):
-    from gui.extendedsensitivityadjustment import sensitivity
-
-    settings = dict(settings)
-
-    arcade = sensitivity.parse_sensitivity(
-        settings.get("arcade_sensitivity"),
-        sensitivity.get_arcade_sensitivity(),
-    )
-    sniper = sensitivity.parse_sensitivity(
-        settings.get("sniper_sensitivity"),
-        sensitivity.get_sniper_sensitivity(),
-    )
-
-    sensitivity.apply_sensitivities(arcade, sniper)
+    sensitivity.apply_sensitivities(_edited_values(dict(settings)))
+    _sync_panel()
 
 
 def _on_settings_changed(linkage, settings):
@@ -97,11 +134,18 @@ def _on_settings_changed(linkage, settings):
     _apply_settings(settings)
 
 
-def _on_button_clicked(linkage, varName, value):
-    pass
+def _on_window_opened():
+    _sync_panel()
+
+
+def _on_native_settings_changed(diff):
+    if any(key in diff for _, key in _vars_to_keys()):
+        _publish_native_values()
 
 
 def register_mods_settings():
+    global _api, _settings_core
+
     api = _get_mods_settings_api()
     if api is None:
         LOG_NOTE(
@@ -110,15 +154,24 @@ def register_mods_settings():
         )
         return False
 
-    template = _build_template()
-
-    if api.getModSettings(MOD_LINKAGE, template):
-        api.registerCallback(
-            MOD_LINKAGE, _on_settings_changed, _on_button_clicked
-        )
-    else:
-        api.setModTemplate(
-            MOD_LINKAGE, template, _on_settings_changed, _on_button_clicked
-        )
-
+    _api = api
+    _settings_core = sensitivity.get_settings_core()
+    _sync_panel()
+    api.registerCallback(MOD_LINKAGE, _on_settings_changed)
+    api.onWindowOpened += _on_window_opened
+    _settings_core.onSettingsChanged += _on_native_settings_changed
     return True
+
+
+def unregister_mods_settings():
+    global _api, _settings_core
+
+    if _api is None:
+        return
+
+    _api.onSettingsChanged -= _on_settings_changed
+    _api.onWindowOpened -= _on_window_opened
+    _settings_core.onSettingsChanged -= _on_native_settings_changed
+    _api = None
+    _settings_core = None
+    _panel_values.clear()

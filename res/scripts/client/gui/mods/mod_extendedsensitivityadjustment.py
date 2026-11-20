@@ -5,4 +5,8 @@ def init():
 
 
 def fini():
-    pass
+    from gui.extendedsensitivityadjustment.mods_settings import (
+        unregister_mods_settings,
+    )
+
+    unregister_mods_settings()

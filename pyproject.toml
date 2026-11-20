@@ -11,6 +11,7 @@ package = false
 
 [dependency-groups]
 dev = [
+    "pytest>=9.2.0",
     "ruff>=0.17.5",
     "ty>=0.0.107",
 ]
@@ -19,4 +20,7 @@ dev = [
 include = ["scripts"]
 
 [tool.ruff]
-include = ["scripts/**/*.py"]
+include = ["scripts/**/*.py", "tests/**/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

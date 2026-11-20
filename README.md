@@ -26,7 +26,7 @@ Without ModsSettings, this mod has no UI and does nothing.
 Example:
 
 ```
-World_of_Tanks/mods/2.2.1.1/ANIALLATOR.Extended_Sensitivity_Adjustment_1.0.0.wotmod
+World_of_Tanks/mods/2.2.1.1/ANIALLATOR.Extended_Sensitivity_Adjustment_1.1.0.wotmod
 ```
 
 ## Usage
@@ -36,11 +36,14 @@ World_of_Tanks/mods/2.2.1.1/ANIALLATOR.Extended_Sensitivity_Adjustment_1.0.0.wot
 3. Enter precise values for **Arcade sensitivity** and **Sniper sensitivity**.
 4. Click **Apply**.
 
+The panel always shows your current values, including changes made with the in-game Options sliders. Only the fields you edit are applied, so an untouched field never overwrites a change made elsewhere.
+
 Values are written through the game's settings API and saved to `preferences.xml` (or `preferences_ct.xml` on Common Test).
 
 ## Values
 
-- These are the **exact floats** from `scriptsPreferences/controlMode` in your preferences file.
+- These are the **exact floats** behind the in-game Options sensitivity sliders, saved in your preferences file.
+- The sniper value also applies to dual-gun and twin-gun aiming, as in the Options menu.
 - Valid range: **0.0 to 10.0** (same as the in-game slider).
 - They are game sensitivity multipliers, not cm/360 measurements.
 
@@ -57,7 +60,7 @@ Python 2.7 is required to compile WoT-compatible bytecode:
 C:\Python27\python.exe build.py --username ANIALLATOR
 ```
 
-Output: `build/ANIALLATOR.Extended_Sensitivity_Adjustment_1.0.0.wotmod`
+Output: `build/ANIALLATOR.Extended_Sensitivity_Adjustment_1.1.0.wotmod`
 
 ## CI and releases
 
@@ -65,6 +68,12 @@ GitHub Actions builds the mod on every pull request and on merges to `main`.
 
 - **Pull requests**: download the `.wotmod` from the workflow run's **Artifacts** (`wotmod-pr-{commit_sha}`).
 - **Merges to `main`**: publishes or updates a [GitHub Release](https://github.com/ANIALLATOR114/extended-sensitivity-adjustment/releases) (`v{version}`) with the built `.wotmod` attached.
+
+Checks run `ruff`, `ty` and the `pytest` suite in `tests/`, which tests the settings lifecycle against stand-ins for the game and ModsSettings API (`uv run pytest`).
+
+### Decompiled reference
+
+See [docs/DECOMPILED_REFERENCE.md](docs/DECOMPILED_REFERENCE.md) for the game and ModsSettings API versions the mod is written against, and how to update them for a new patch.
 
 ### Publishing to wgmods.net
 
@@ -75,3 +84,7 @@ The mod version lives in `build.py` (`--version` default). Release tooling in `s
 
 Both workflows authenticate with the repo secrets `WGMODS_SESSIONID` and `WGMODS_CSRFTOKEN`, which are your wgmods.net login cookies. Find them in DevTools → Application → Cookies → `https://wgmods.net`. If they stop working, the daily run opens a "wgmods session cookie expired" issue telling you to paste fresh ones.
 
+## Credits
+
+- [StranikS-Scan / WorldOfTanks-Decompiled](https://github.com/StranikS-Scan/WorldOfTanks-Decompiled): decompiled game sources
+- [ModsSettings API](https://github.com/izeberg/modssettingsapi): mod configuration menu
