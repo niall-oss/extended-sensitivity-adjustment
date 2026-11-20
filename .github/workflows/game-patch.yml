@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
 
@@ -69,12 +69,12 @@ jobs:
     container:
       image: python:2.7.18-buster
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build wotmod
         run: python build.py --username ANIALLATOR
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wotmod
           path: build/*.wotmod
@@ -103,7 +103,7 @@ jobs:
           files: build/ANIALLATOR.Extended_Sensitivity_Adjustment_${{ env.MOD_VERSION }}.wotmod
           make_latest: true
 
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
 
