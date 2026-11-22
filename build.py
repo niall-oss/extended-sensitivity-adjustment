@@ -13,7 +13,7 @@ parser.add_argument(
     default="Extended Sensitivity Adjustment",
     help="Mod name",
 )
-parser.add_argument("-v", "--version", default="1.1.0", help="Mod version")
+parser.add_argument("-v", "--version", default="1.1.1", help="Mod version")
 parser.add_argument(
     "-d",
     "--description",
