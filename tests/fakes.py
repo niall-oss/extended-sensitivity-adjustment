@@ -32,6 +32,7 @@ class FakeSettingsCore:
     def __init__(self, arcade, sniper):
         self.values = {ARCADE_KEY: arcade, SNIPER_KEY: sniper}
         self.onSettingsChanged = Event()
+        self.onSettingsApplied = Event()
         self.applied = []
 
     def getSetting(self, key):
@@ -43,6 +44,7 @@ class FakeSettingsCore:
             if self.values[key] != value:
                 self.values[key] = value
                 self.onSettingsChanged({key: value})
+        self.onSettingsApplied(dict(diff))
 
     def change_natively(self, key, value):
         self.values[key] = value

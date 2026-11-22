@@ -62,6 +62,16 @@ def test_native_change_refreshes_panel(game):
     assert "Current arcade: 3.000000" in _labels(game)
 
 
+def test_options_apply_diff_refreshes_panel(game):
+    game.entry.init()
+    game.core.values[SNIPER_KEY] = 2.5
+
+    game.core.onSettingsApplied({SNIPER_KEY: 2.5})
+
+    assert _panel(game)["sniper_sensitivity"] == "2.500000"
+    assert "Current sniper: 2.500000" in _labels(game)
+
+
 def test_reopening_shows_current_values_after_cancel(game):
     game.entry.init()
     game.core.values[SNIPER_KEY] = 4.0
@@ -116,6 +126,7 @@ def test_fini_removes_every_handler_and_is_idempotent(game):
     assert list(game.api.onSettingsChanged) == []
     assert list(game.api.onWindowOpened) == []
     assert list(game.core.onSettingsChanged) == []
+    assert list(game.core.onSettingsApplied) == []
 
 
 def test_reinit_after_fini_registers_once(game):
@@ -126,3 +137,4 @@ def test_reinit_after_fini_registers_once(game):
     assert len(game.api.onSettingsChanged) == 1
     assert len(game.api.onWindowOpened) == 1
     assert len(game.core.onSettingsChanged) == 1
+    assert len(game.core.onSettingsApplied) == 1

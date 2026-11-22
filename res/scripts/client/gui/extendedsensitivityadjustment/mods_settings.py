@@ -159,7 +159,11 @@ def register_mods_settings():
     _sync_panel()
     api.registerCallback(MOD_LINKAGE, _on_settings_changed)
     api.onWindowOpened += _on_window_opened
+    # Options sensitivity changes reach onSettingsChanged only through the
+    # client's AccountSettings forwarding; onSettingsApplied carries the
+    # Apply diff itself, so the panel refreshes even without that forwarding.
     _settings_core.onSettingsChanged += _on_native_settings_changed
+    _settings_core.onSettingsApplied += _on_native_settings_changed
     return True
 
 
@@ -172,6 +176,7 @@ def unregister_mods_settings():
     _api.onSettingsChanged -= _on_settings_changed
     _api.onWindowOpened -= _on_window_opened
     _settings_core.onSettingsChanged -= _on_native_settings_changed
+    _settings_core.onSettingsApplied -= _on_native_settings_changed
     _api = None
     _settings_core = None
     _panel_values.clear()
